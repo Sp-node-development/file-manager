@@ -1,16 +1,11 @@
-/**
- * Created by SOFTMAN on 01-07-2017.
- */
 module.exports = function (express, app) {
     var path = require("path"),
         fs = require("fs"),
-        // the default drive
         dir = process.env.DPATH || "./";
-        router = express.Router(),
+    router = express.Router(),
         archiver = require('archiver'),
         formidable = require('formidable'),
-        // util = require('util'),
-        dirpop = dir ;
+        dirpop = dir;
 
     router.get('/', function (req, res, next) {
         res.sendFile('files.html', {root: path.join(__dirname, "..", "views")});
@@ -34,8 +29,12 @@ module.exports = function (express, app) {
                         path: decodedURI + "/" + file,
                         time: fs.lstatSync(path.join(dirpath, file)).mtime.toLocaleString(),
                         isDir: fs.lstatSync(path.join(dirpath, file)).isDirectory(),
-                        icon: getFileIcon(path.extname(file))
+                        icon: getFileIcon(path.extname(file)),
+                        size: Math.round(fs.lstatSync(path.join(dirpath, file)).size / (1024)).toString() + " KB"
                     };
+                    if (fileObj.isDir) {
+                        fileObj.size = " ";
+                    }
                     filesArr.push(fileObj)
                 });
 
@@ -55,7 +54,8 @@ module.exports = function (express, app) {
                 type: path.extname(dirpath),
                 path: dirpath,
                 time: stat.mtime.toLocaleString(),
-                isDirectory: isDir
+                isDirectory: isDir,
+                size: (fs.lstatSync(path.join(dirpath, file)).size / 1024).toString() + "KB"
             }
             return res.json(obj)
         }
@@ -74,7 +74,11 @@ module.exports = function (express, app) {
                     path: "/files/" + file,
                     time: fs.lstatSync(path.join(dir, file)).mtime.toLocaleString(),
                     isDir: fs.lstatSync(path.join(dir, file)).isDirectory(),
-                    icon: getFileIcon(path.extname(file))
+                    icon: getFileIcon(path.extname(file)),
+                    size: Math.round(fs.lstatSync(path.join(dir, file)).size / (1024 )).toString() + " KB"
+                };
+                if (fileObj.isDir) {
+                    fileObj.size = " "
                 }
                 filesArr.push(fileObj)
 
@@ -92,8 +96,7 @@ module.exports = function (express, app) {
         })
     });
 
-    router.get('/archive/*', function (req, res) {
-        console.log("I am called");
+/*    router.get('/archive/!*', function (req, res) {
         var decodedURI = decodeURI(req.url);
         var dirarr = decodedURI.split('/');
         var dirpath = path.join(dir, dirarr.slice(2).join("/"));
@@ -116,19 +119,35 @@ module.exports = function (express, app) {
         });
         archive.finalize();
 
+    });*/
+    router.post('/archive', function (req, res) {
+
+        var archive = archiver('zip', {
+            zlib: {level: 9}
+        });
+        console.log("***************************\nDir: "+dirpop);
+        var s = req.body.selected;
+        var filess = s.split(',');
+        filess.forEach(function (eachfile) {
+           console.log("File: "+path.join(dirpop,eachfile));
+           archive.file(path.join(dirpop,eachfile));
+        });
+        res.setHeader("Content-Type", "application/zip");
+        res.setHeader('Content-disposition', 'attachment; filename=downlaod.zip');
+        archive.pipe(res);
+        archive.finalize();
     });
 
     router.post('/upload', function (req, res) {
 
-        console.log("dirpop: "+dirpop)
+        console.log("dirpop: " + dirpop)
         var form = new formidable.IncomingForm();
         form.uploadDir = dirpop;
         form.keepExtensions = true;
-        form.parse(req, function(err, fields, files) {
+        form.parse(req, function (err, fields, files) {
             res.redirect('/');
         });
-        form.on('file', function(field, file) {
-            //rename the incoming file to the file's name
+        form.on('file', function (field, file) {
             fs.rename(file.path, form.uploadDir + "/" + file.name);
         });
     });
@@ -138,35 +157,35 @@ function getFileIcon(ext) {
     return ( ext && extensionsMap[ext.toLowerCase()]) || 'fa-file-o';
 }
 var extensionsMap = {
-    ".zip" : "fa-file-archive-o",
-    ".gz" : "fa-file-archive-o",
-    ".bz2" : "fa-file-archive-o",
-    ".xz" : "fa-file-archive-o",
-    ".rar" : "fa-file-archive-o",
-    ".tar" : "fa-file-archive-o",
-    ".tgz" : "fa-file-archive-o",
-    ".tbz2" : "fa-file-archive-o",
-    ".z" : "fa-file-archive-o",
-    ".7z" : "fa-file-archive-o",
-    ".mp3" : "fa-file-audio-o",
-    ".cs" : "fa-file-code-o",
-    ".c++" : "fa-file-code-o",
-    ".cpp" : "fa-file-code-o",
-    ".js" : "fa-file-code-o",
-    ".xls" : "fa-file-excel-o",
-    ".xlsx" : "fa-file-excel-o",
-    ".png" : "fa-file-image-o",
-    ".jpg" : "fa-file-image-o",
-    ".jpeg" : "fa-file-image-o",
-    ".gif" : "fa-file-image-o",
-    ".mpeg" : "fa-file-movie-o",
-    ".pdf" : "fa-file-pdf-o",
-    ".ppt" : "fa-file-powerpoint-o",
-    ".pptx" : "fa-file-powerpoint-o",
-    ".txt" : "fa-file-text-o",
-    ".log" : "fa-file-text-o",
-    ".doc" : "fa-file-word-o",
-    ".docx" : "fa-file-word-o"
+    ".zip": "fa-file-archive-o",
+    ".gz": "fa-file-archive-o",
+    ".bz2": "fa-file-archive-o",
+    ".xz": "fa-file-archive-o",
+    ".rar": "fa-file-archive-o",
+    ".tar": "fa-file-archive-o",
+    ".tgz": "fa-file-archive-o",
+    ".tbz2": "fa-file-archive-o",
+    ".z": "fa-file-archive-o",
+    ".7z": "fa-file-archive-o",
+    ".mp3": "fa-file-audio-o",
+    ".cs": "fa-file-code-o",
+    ".c++": "fa-file-code-o",
+    ".cpp": "fa-file-code-o",
+    ".js": "fa-file-code-o",
+    ".xls": "fa-file-excel-o",
+    ".xlsx": "fa-file-excel-o",
+    ".png": "fa-file-image-o",
+    ".jpg": "fa-file-image-o",
+    ".jpeg": "fa-file-image-o",
+    ".gif": "fa-file-image-o",
+    ".mpeg": "fa-file-movie-o",
+    ".pdf": "fa-file-pdf-o",
+    ".ppt": "fa-file-powerpoint-o",
+    ".pptx": "fa-file-powerpoint-o",
+    ".txt": "fa-file-text-o",
+    ".log": "fa-file-text-o",
+    ".doc": "fa-file-word-o",
+    ".docx": "fa-file-word-o"
 };
 
 

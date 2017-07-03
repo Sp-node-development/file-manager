@@ -1,7 +1,14 @@
-/**
- * Created by SOFTMAN on 02/-07-2017.
- */
 var current_dir;
+var selected = [];
+var p ;
+// Download
+$("#download-btn").click(function () {
+    var spl = current_dir.split('/');
+    var url = spl.slice(2).join('/');
+  //  window.location = '/archive/' + url;
+    post('/archive', {'selected': selected});
+
+});
 $(document).ready(function () {
 
     $.ajax({
@@ -10,14 +17,21 @@ $(document).ready(function () {
             contentAdder(result);
         }
     });
-    $("#download-btn").click(function () {
-        var spl = current_dir.split('/');
-        var url = spl.slice(2).join('/');
-        window.location = '/archive/'+url;
-        console.log(url)
+
+    $('#checkbox-all').change(function () {
+        var h = $("#checkbox-all").is(':checked');
+        $(".checkbox-class").prop('checked', $(this).prop('checked'));
+        console.log(this);
+    });
+
+    $(document).on('change','.checkbox-class', function(){
+        console.log(this);
+        var data = $(this).attr("data");
+        console.log(data)
+        selected.push(data)
+        /*if($(this).)*/
     });
     function up() {
-        console.log("Curr:" + current_dir)
         if (current_dir === "/") {
             alert("Currently in Root")
         } else {
@@ -35,25 +49,26 @@ $(document).ready(function () {
 
 });
 
+
 function contentAdder(data) {
     if (data.isDir) {
+        selected = [];
         current_dir = data.path;
         $("#t-body").html('');
         data.files.forEach(function (file) {
-            var icon ;
-
-            console.log(file.isDir);
-            if(file.isDir) {
+            var file_url = file.name
+            var icon;
+            if (file.isDir) {
                 icon = "fa fa-folder";
             } else {
-                icon = "fa "+file.icon;
+                icon = "fa " + file.icon;
             }
             var row = "<tr class='sortable'>" +
-                "<td><input type='checkbox'></td>" +
-                "<td class='td-small'><i class='"+icon+" '></i></td>" +
+                "<td><input type='checkbox' class='checkbox-class' data='"+file_url+"'></td>" +
+                "<td class='td-small'><i class='" + icon + " '></i></td>" +
                 "<td><a href='javascript: ajaxReload(&#39;" + file.path + "&#39;)' >" + file.name + "</a></td>" +
-                "<td>" + file.name + "</td>" +
-                "<td>" + file.name + "</td>" +
+                "<td>" + file.size + "</td>" +
+                "<td>" + file.time + "</td>" +
                 "</tr>";
             $("#t-body").append(row)
         });
@@ -62,12 +77,34 @@ function contentAdder(data) {
     }
 }
 function ajaxReload(url) {
-    //  console.log("ajax Reload called");
     $.ajax({
         url: url,
         success: function (result) {
             contentAdder(result);
-            console.log(result);
         }
     });
+}
+
+
+function post(path, params, method) {
+    console.log("I am called")
+    method = method || "post";
+    console.log(params);
+    p = params
+    var form = document.createElement("form");
+    form.setAttribute("method", method);
+    form.setAttribute("action", path);
+    for(var key in params) {
+        if(params.hasOwnProperty(key)) {
+            var hiddenField = document.createElement("input");
+            hiddenField.setAttribute("type", "hidden");
+            hiddenField.setAttribute("name", key);
+            hiddenField.setAttribute("value", params[key]);
+
+            form.appendChild(hiddenField);
+        }
+    }
+
+    document.body.appendChild(form);
+    form.submit();
 }

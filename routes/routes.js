@@ -73,7 +73,8 @@ module.exports = function (express, app) {
                     name: file,
                     path: "/files/" + file,
                     time: fs.lstatSync(path.join(dir, file)).mtime.toLocaleString(),
-                    isDir: fs.lstatSync(path.join(dir, file)).isDirectory()
+                    isDir: fs.lstatSync(path.join(dir, file)).isDirectory(),
+                    icon: getFileIcon(path.extname(file))
                 }
                 filesArr.push(fileObj)
 

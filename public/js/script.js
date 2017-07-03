@@ -1,5 +1,5 @@
 /**
- * Created by SOFTMAN on 02-07-2017.
+ * Created by SOFTMAN on 02/-07-2017.
  */
 var current_dir;
 $(document).ready(function () {
@@ -40,11 +40,17 @@ function contentAdder(data) {
         current_dir = data.path;
         $("#t-body").html('');
         data.files.forEach(function (file) {
+            var icon ;
 
-            console.log(file)
+            console.log(file.isDir);
+            if(file.isDir) {
+                icon = "fa fa-folder";
+            } else {
+                icon = "fa "+file.icon;
+            }
             var row = "<tr class='sortable'>" +
                 "<td><input type='checkbox'></td>" +
-                "<td><i class='"+file.icon+"'></i></td>" +
+                "<td class='td-small'><i class='"+icon+" '></i></td>" +
                 "<td><a href='javascript: ajaxReload(&#39;" + file.path + "&#39;)' >" + file.name + "</a></td>" +
                 "<td>" + file.name + "</td>" +
                 "<td>" + file.name + "</td>" +

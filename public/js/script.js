@@ -1,11 +1,11 @@
 var current_dir;
 var selected = [];
-var p ;
+var p;
 // Download
 $("#download-btn").click(function () {
     var spl = current_dir.split('/');
     var url = spl.slice(2).join('/');
-  //  window.location = '/archive/' + url;
+    //  window.location = '/archive/' + url;
     post('/archive', {'selected': selected});
 
 });
@@ -24,12 +24,22 @@ $(document).ready(function () {
         console.log(this);
     });
 
-    $(document).on('change','.checkbox-class', function(){
-        console.log(this);
+    $(document).on('change', '.checkbox-class', function () {
         var data = $(this).attr("data");
-        console.log(data)
-        selected.push(data)
-        /*if($(this).)*/
+        if ($(this).is(':checked')) {
+            console.log("Checked");
+            //   console.log(data)
+            selected.push(data)
+            console.log("array: " + selected)
+        } else {
+            console.log("unchecked");
+            var index = selected.indexOf(data);
+            if (index > -1) {
+                selected.splice(index, 1);
+                console.log("array: " + selected)
+            }
+        }
+
     });
     function up() {
         if (current_dir === "/") {
@@ -48,10 +58,13 @@ $(document).ready(function () {
     });
 
 });
-//hh
+
 
 function contentAdder(data) {
+    console.log("Iam called:::::: dir:"+data.isDir)
+
     if (data.isDir) {
+        console.log("iam dir")
         selected = [];
         current_dir = data.path;
         $("#t-body").html('');
@@ -64,15 +77,16 @@ function contentAdder(data) {
                 icon = "fa " + file.icon;
             }
             var row = "<tr class='sortable'>" +
-                "<td><input type='checkbox' class='checkbox-class' data='"+file_url+"'></td>" +
+                "<td><input type='checkbox' class='checkbox-class' data='" + file_url + "'></td>" +
                 "<td class='td-small'><i class='" + icon + " '></i></td>" +
                 "<td><a href='javascript: ajaxReload(&#39;" + file.path + "&#39;)' >" + file.name + "</a></td>" +
-                "<td>" + file.size + "</td>" +
                 "<td>" + file.time + "</td>" +
+                "<td>" + file.size + "</td>" +
                 "</tr>";
             $("#t-body").append(row)
         });
     } else {
+        console.log("I am not A dir")
         alert("Its a file")
     }
 }
@@ -94,8 +108,8 @@ function post(path, params, method) {
     var form = document.createElement("form");
     form.setAttribute("method", method);
     form.setAttribute("action", path);
-    for(var key in params) {
-        if(params.hasOwnProperty(key)) {
+    for (var key in params) {
+        if (params.hasOwnProperty(key)) {
             var hiddenField = document.createElement("input");
             hiddenField.setAttribute("type", "hidden");
             hiddenField.setAttribute("name", key);

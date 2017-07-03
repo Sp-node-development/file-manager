@@ -1,23 +1,29 @@
 module.exports = function (express, app) {
     var path = require("path"),
         fs = require("fs"),
-        dir = process.env.DPATH || "./";
-    router = express.Router(),
+        dir = process.env.DPATH
+        router = express.Router(),
         archiver = require('archiver'),
         formidable = require('formidable'),
+        colors = require("colors");
         dirpop = dir;
 
     router.get('/', function (req, res, next) {
+        console.log("Dirpop: "+dirpop);
         res.sendFile('files.html', {root: path.join(__dirname, "..", "views")});
     });
     router.get("/files/*", function (req, res, next) {
         console.log("path : " + req.url);
         var decodedURI = decodeURI(req.url)
         var dirarr = decodedURI.split('/');
+        console.log("dirarray: "+dirarr)
         var dirpath = path.join(dir, dirarr.slice(2).join("/"));
         var stat = fs.lstatSync(dirpath);
+        console.log("dirpathFiles: ".yellow+dirpath .yellow)
         var isDir = fs.lstatSync(dirpath).isDirectory();
+
         dirpop = dirpath;
+        console.log("DIr from files*: "+dirpop);
         if (isDir) {
             //    Its a directory
             fs.readdir(dirpath, function (err, files) {
@@ -50,12 +56,14 @@ module.exports = function (express, app) {
             });
         } else {
             //Its a file
+            console.log("Its a file");
+            console.log("file dir: "+dirpath)
             var obj = {
                 type: path.extname(dirpath),
                 path: dirpath,
                 time: stat.mtime.toLocaleString(),
                 isDirectory: isDir,
-                size: (fs.lstatSync(path.join(dirpath, file)).size / 1024).toString() + "KB"
+                size: (fs.lstatSync(dirpath).size / 1024).toString() + "KB"
             }
             return res.json(obj)
         }
@@ -63,11 +71,11 @@ module.exports = function (express, app) {
     });
 
     router.get("/files", function (req, res, next) {
-
+        dirpop = dir;
+        console.log("Iam the bug: "+dir)
         fs.readdir(dir, function (err, files) {
             var fileObj,
                 filesArr = [];
-
             files.forEach(function (file) {
                 fileObj = {
                     name: file,
@@ -83,7 +91,6 @@ module.exports = function (express, app) {
                 filesArr.push(fileObj)
 
             });
-
             if (err) throw err
             var obj = {
                 files: filesArr,
@@ -96,46 +103,50 @@ module.exports = function (express, app) {
         })
     });
 
-/*    router.get('/archive/!*', function (req, res) {
-        var decodedURI = decodeURI(req.url);
-        var dirarr = decodedURI.split('/');
-        var dirpath = path.join(dir, dirarr.slice(2).join("/"));
-        console.log("dirpath: " + dirpath);
-        var output = fs.createWriteStream(__dirname + '/7.zip');
-        console.dir("out: ", output);
-        var archive = archiver('zip', {
-            zlib: {level: 9} // Sets the compression level.
-        });
-        archive.directory(dirpath, 'download');
-        archive.on('error', function (err) {
-            console.log(err);
-        });
-        res.setHeader("Content-Type", "application/zip");
-        res.setHeader('Content-disposition', 'attachment; filename=downlaod.zip');
-        archive.pipe(res);
-        archive.on('finish', function () {
-            console.log("finished zipping");
-
-        });
-        archive.finalize();
-
-    });*/
     router.post('/archive', function (req, res) {
 
         var archive = archiver('zip', {
             zlib: {level: 9}
         });
-        console.log("***************************\nDir: "+dirpop);
         var s = req.body.selected;
         var filess = s.split(',');
-        filess.forEach(function (eachfile) {
-           console.log("File: "+path.join(dirpop,eachfile));
-           archive.file(path.join(dirpop,eachfile));
-        });
-        res.setHeader("Content-Type", "application/zip");
-        res.setHeader('Content-disposition', 'attachment; filename=downlaod.zip');
-        archive.pipe(res);
-        archive.finalize();
+        console.log("leng: "+filess.length);
+        if(filess.length >1) {
+            filess.forEach(function (eachfile) {
+
+                var reqDirPath = path.join(dirpop, eachfile);
+                console.log("DIR: "+reqDirPath)
+
+                if (fs.lstatSync(reqDirPath).isDirectory()) {
+                    archive.directory(reqDirPath)
+                } else {
+                    console.log("File: " + reqDirPath);
+                    archive.file(reqDirPath);
+                }
+
+            });
+            res.setHeader("Content-Type", "application/zip");
+            res.setHeader('Content-disposition', 'attachment; filename=downlaod.zip');
+            archive.pipe(res);
+            archive.finalize();
+        } else {
+            var reqDirPath = path.join(dirpop, filess[0]);
+            console.log("DIR: "+reqDirPath)
+
+            if (fs.lstatSync(reqDirPath).isDirectory()) {
+                archive.directory(reqDirPath)
+                res.setHeader("Content-Type", "application/zip");
+                res.setHeader('Content-disposition', 'attachment; filename=downlaod.zip');
+                archive.pipe(res);
+                archive.finalize();
+            } else {
+                var reqDirPath = path.join(dirpop, filess[0]);
+                console.log("DIr: "+__dirname)
+                res.download(reqDirPath);
+
+            }
+        }
+
     });
 
     router.post('/upload', function (req, res) {

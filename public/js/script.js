@@ -8,7 +8,6 @@ $(document).ready(function () {
         url: "/files",
         success: function (result) {
             contentAdder(result);
-
         }
     });
     $("#download-btn").click(function () {
@@ -42,9 +41,10 @@ function contentAdder(data) {
         $("#t-body").html('');
         data.files.forEach(function (file) {
 
+            console.log(file)
             var row = "<tr class='sortable'>" +
                 "<td><input type='checkbox'></td>" +
-                "<td><span>Icon</span></td>" +
+                "<td><i class='"+file.icon+"'></i></td>" +
                 "<td><a href='javascript: ajaxReload(&#39;" + file.path + "&#39;)' >" + file.name + "</a></td>" +
                 "<td>" + file.name + "</td>" +
                 "<td>" + file.name + "</td>" +

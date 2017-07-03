@@ -5,7 +5,7 @@ module.exports = function (express, app) {
     var path = require("path"),
         fs = require("fs"),
         // the default drive
-        dir = process.env.dirpath || "./";
+        dir = process.env.DPATH || "./";
         router = express.Router(),
         archiver = require('archiver'),
         formidable = require('formidable'),
@@ -33,7 +33,8 @@ module.exports = function (express, app) {
                         name: file,
                         path: decodedURI + "/" + file,
                         time: fs.lstatSync(path.join(dirpath, file)).mtime.toLocaleString(),
-                        isDir: fs.lstatSync(path.join(dirpath, file)).isDirectory()
+                        isDir: fs.lstatSync(path.join(dirpath, file)).isDirectory(),
+                        icon: getFileIcon(path.extname(file))
                     };
                     filesArr.push(fileObj)
                 });
@@ -131,6 +132,40 @@ module.exports = function (express, app) {
         });
     });
     app.use('/', router);
+};
+function getFileIcon(ext) {
+    return ( ext && extensionsMap[ext.toLowerCase()]) || 'fa-file-o';
+}
+var extensionsMap = {
+    ".zip" : "fa-file-archive-o",
+    ".gz" : "fa-file-archive-o",
+    ".bz2" : "fa-file-archive-o",
+    ".xz" : "fa-file-archive-o",
+    ".rar" : "fa-file-archive-o",
+    ".tar" : "fa-file-archive-o",
+    ".tgz" : "fa-file-archive-o",
+    ".tbz2" : "fa-file-archive-o",
+    ".z" : "fa-file-archive-o",
+    ".7z" : "fa-file-archive-o",
+    ".mp3" : "fa-file-audio-o",
+    ".cs" : "fa-file-code-o",
+    ".c++" : "fa-file-code-o",
+    ".cpp" : "fa-file-code-o",
+    ".js" : "fa-file-code-o",
+    ".xls" : "fa-file-excel-o",
+    ".xlsx" : "fa-file-excel-o",
+    ".png" : "fa-file-image-o",
+    ".jpg" : "fa-file-image-o",
+    ".jpeg" : "fa-file-image-o",
+    ".gif" : "fa-file-image-o",
+    ".mpeg" : "fa-file-movie-o",
+    ".pdf" : "fa-file-pdf-o",
+    ".ppt" : "fa-file-powerpoint-o",
+    ".pptx" : "fa-file-powerpoint-o",
+    ".txt" : "fa-file-text-o",
+    ".log" : "fa-file-text-o",
+    ".doc" : "fa-file-word-o",
+    ".docx" : "fa-file-word-o"
 };
 
 

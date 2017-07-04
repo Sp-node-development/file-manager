@@ -1,29 +1,44 @@
 module.exports = function (express, app) {
     var path = require("path"),
         fs = require("fs"),
-        dir = process.env.DPATH
+        dir,
         router = express.Router(),
         archiver = require('archiver'),
         formidable = require('formidable'),
         colors = require("colors");
         dirpop = dir;
-
+        if(process.env.DPATH === undefined) {
+            console.log(`
+            _____________________________________________
+           |                                             |
+           |                                             |
+           |        First set the directory path         | 
+           |    Eg: type - "set DPATH=C:\Users\public"   |
+           |       !! Do not set system root folders!!   |
+           |    press Enter and rerun node - "node app"  |
+           |                                             |
+           |_____________________________________________|`.yellow)
+            process.exit();
+        } else {
+            console.log("\nReading from  folder : ".green+process.env.DPATH .white +"\n" )
+            dir = process.env.DPATH;
+        }
     router.get('/', function (req, res, next) {
-        console.log("Dirpop: "+dirpop);
+    //    console.log("Dirpop: "+dirpop);
         res.sendFile('files.html', {root: path.join(__dirname, "..", "views")});
     });
     router.get("/files/*", function (req, res, next) {
-        console.log("path : " + req.url);
+      //  console.log("path : " + req.url);
         var decodedURI = decodeURI(req.url)
         var dirarr = decodedURI.split('/');
-        console.log("dirarray: "+dirarr)
+       // console.log("dirarray: "+dirarr)
         var dirpath = path.join(dir, dirarr.slice(2).join("/"));
         var stat = fs.lstatSync(dirpath);
-        console.log("dirpathFiles: ".yellow+dirpath .yellow)
+       // console.log("dirpathFiles: ".yellow+dirpath .yellow)
         var isDir = fs.lstatSync(dirpath).isDirectory();
 
         dirpop = dirpath;
-        console.log("DIr from files*: "+dirpop);
+       // console.log("DIr from files*: "+dirpop);
         if (isDir) {
             //    Its a directory
             fs.readdir(dirpath, function (err, files) {
@@ -56,8 +71,8 @@ module.exports = function (express, app) {
             });
         } else {
             //Its a file
-            console.log("Its a file");
-            console.log("file dir: "+dirpath)
+          //  console.log("Its a file");
+         //   console.log("file dir: "+dirpath)
             var obj = {
                 type: path.extname(dirpath),
                 path: dirpath,
@@ -72,7 +87,6 @@ module.exports = function (express, app) {
 
     router.get("/files", function (req, res, next) {
         dirpop = dir;
-        console.log("Iam the bug: "+dir)
         fs.readdir(dir, function (err, files) {
             var fileObj,
                 filesArr = [];
@@ -110,17 +124,17 @@ module.exports = function (express, app) {
         });
         var s = req.body.selected;
         var filess = s.split(',');
-        console.log("leng: "+filess.length);
+      //  console.log("leng: "+filess.length);
         if(filess.length >1) {
             filess.forEach(function (eachfile) {
 
                 var reqDirPath = path.join(dirpop, eachfile);
-                console.log("DIR: "+reqDirPath)
+             //   console.log("DIR: "+reqDirPath)
 
                 if (fs.lstatSync(reqDirPath).isDirectory()) {
                     archive.directory(reqDirPath)
                 } else {
-                    console.log("File: " + reqDirPath);
+               //     console.log("File: " + reqDirPath);
                     archive.file(reqDirPath);
                 }
 
@@ -131,7 +145,7 @@ module.exports = function (express, app) {
             archive.finalize();
         } else {
             var reqDirPath = path.join(dirpop, filess[0]);
-            console.log("DIR: "+reqDirPath)
+           // console.log("DIR: "+reqDirPath)
 
             if (fs.lstatSync(reqDirPath).isDirectory()) {
                 archive.directory(reqDirPath)
@@ -141,7 +155,7 @@ module.exports = function (express, app) {
                 archive.finalize();
             } else {
                 var reqDirPath = path.join(dirpop, filess[0]);
-                console.log("DIr: "+__dirname)
+             ///   console.log("DIr: "+__dirname)
                 res.download(reqDirPath);
 
             }
@@ -151,7 +165,7 @@ module.exports = function (express, app) {
 
     router.post('/upload', function (req, res) {
 
-        console.log("dirpop: " + dirpop)
+     //   console.log("dirpop: " + dirpop)
         var form = new formidable.IncomingForm();
         form.uploadDir = dirpop;
         form.keepExtensions = true;

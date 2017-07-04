@@ -8,6 +8,11 @@ var express = require("express"),
     bodyParser = require("body-parser"),
     path = require('path'),
     logger = require("morgan");
+var ngrok = require('ngrok');
+ngrok.connect({proto: 'http', addr: 3000}, function (err, url) {
+    console.log("Remote url: "+url)
+}); // https://757c1652.ngrok.io -> http://localhost:9090 
+
 
 app.set('views', path.join(__dirname, "views"));
 app.set("view engine", "ejs");
